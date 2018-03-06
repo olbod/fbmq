@@ -148,6 +148,12 @@ class SenderAction:
     TYPING_OFF = 'typing_off'
     MARK_SEEN = 'mark_seen'
 
+class ThreadControl:
+    PASS_THREAD_CONTROL = 'pass_thread_control'
+    REQUEST_THREAD_CONTROL = 'request_thread_control'
+    TAKE_THREAD_CONTROL = 'take_thread_control'
+
+
 
 class Event(object):
     def __init__(self, messaging=None):
@@ -296,7 +302,8 @@ class Page(object):
         self._page_id = None
         self._page_name = None
 
-    WEBHOOK_ENDPOINTS = ['optin', 'message', 'echo', 'delivery', 'postback', 'read', 'account_linking', 'referral']
+    WEBHOOK_ENDPOINTS = ['optin', 'message', 'echo', 'delivery', 'postback', 'read', 'account_linking', 'referral',
+                         'handovers', 'standby']
 
     # these are set by decorators or the 'set_webhook_handler' method
     _webhook_handlers = {}
@@ -321,7 +328,8 @@ class Page(object):
             print("there's no %s handler" % name)
 
     def handle_webhook(self, payload, optin=None, message=None, echo=None, delivery=None,
-                       postback=None, read=None, account_linking=None, referral=None):
+                       postback=None, read=None, account_linking=None, referral=None,
+                       handovers=None, standby=None):
         data = json.loads(payload)
 
         # Make sure this is a page subscription
@@ -366,6 +374,10 @@ class Page(object):
                 self._call_handler('account_linking', account_linking, event)
             elif event.is_referral:
                 self._call_handler('referral', referral, event)
+            elif event.is_handovers:
+                self._call_handler('handovers', handovers, event)
+            elif event.is_standby:
+                self._call_handler('standby', standby, event)
             else:
                 print("Webhook received unknown messaging Event:", event)
 
@@ -629,6 +641,12 @@ class Page(object):
 
     def after_send(self, func):
         self._after_send = func
+
+    def handovers(self, func):
+        self._handovers = func
+
+    def standby(self, func):
+        self._handovers = func
 
     _callback_default_types = ['QUICK_REPLY', 'POSTBACK']
 
