@@ -291,6 +291,14 @@ class Event(object):
     def postback_referral_ref(self):
         return self.messaging.get("postback", {}).get("referral", {}).get("ref", '')
 
+    @property
+    def messaging_handovers(self):
+        return self.messaging.get("messaging_handovers", {})
+
+    @property
+    def is_messaging_handovers(self):
+        return 'messaging_handovers' in self.messaging
+
 
 class Page(object):
     def __init__(self, page_access_token, **options):
@@ -303,7 +311,7 @@ class Page(object):
         self._page_name = None
 
     WEBHOOK_ENDPOINTS = ['optin', 'message', 'echo', 'delivery', 'postback', 'read', 'account_linking', 'referral',
-                         'handovers', 'standby']
+                         'messaging_handovers', 'standby']
 
     # these are set by decorators or the 'set_webhook_handler' method
     _webhook_handlers = {}
@@ -320,6 +328,7 @@ class Page(object):
         return "https://graph.facebook.com/" + self._api_ver + "/" + sub
 
     def _call_handler(self, name, func, *args, **kwargs):
+        print('---->', name, func)
         if func is not None:
             func(*args, **kwargs)
         elif name in self._webhook_handlers:
@@ -329,7 +338,7 @@ class Page(object):
 
     def handle_webhook(self, payload, optin=None, message=None, echo=None, delivery=None,
                        postback=None, read=None, account_linking=None, referral=None,
-                       handovers=None, standby=None):
+                       messaging_handovers=None, standby=None):
         data = json.loads(payload)
 
         # Make sure this is a page subscription
@@ -340,6 +349,7 @@ class Page(object):
         # Iterate over each entry
         # There may be multiple if batched
         def get_events(data):
+            print(data)
             for entry in data.get("entry"):
                 messagings = entry.get("messaging")
                 if not messagings:
@@ -374,10 +384,10 @@ class Page(object):
                 self._call_handler('account_linking', account_linking, event)
             elif event.is_referral:
                 self._call_handler('referral', referral, event)
-            elif event.is_handovers:
-                self._call_handler('handovers', handovers, event)
-            elif event.is_standby:
-                self._call_handler('standby', standby, event)
+            elif event.is_messaging_handovers:
+                self._call_handler('messaging_handovers', messaging_handovers, event)
+            # elif event.is_standby:
+            #     self._call_handler('standby', standby, event)
             else:
                 print("Webhook received unknown messaging Event:", event)
 
@@ -642,11 +652,11 @@ class Page(object):
     def after_send(self, func):
         self._after_send = func
 
-    def handovers(self, func):
-        self._handovers = func
+    def handle_massaging_handovers(self, func):
+        self._webhook_handlers['massaging_handovers'] = func
 
-    def standby(self, func):
-        self._handovers = func
+    # def standby(self, func):
+    #     self._handovers = func
 
     _callback_default_types = ['QUICK_REPLY', 'POSTBACK']
 
