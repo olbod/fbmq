@@ -292,12 +292,12 @@ class Event(object):
         return self.messaging.get("postback", {}).get("referral", {}).get("ref", '')
 
     @property
-    def messaging_handovers(self):
-        return self.messaging.get("messaging_handovers", {})
+    def app_roles(self):
+        return self.messaging.get("app_roles", {})
 
     @property
-    def is_messaging_handovers(self):
-        return 'messaging_handovers' in self.messaging
+    def is_messaging_app_roles(self):
+        return 'app_roles' in self.messaging
 
 
 class Page(object):
@@ -311,7 +311,7 @@ class Page(object):
         self._page_name = None
 
     WEBHOOK_ENDPOINTS = ['optin', 'message', 'echo', 'delivery', 'postback', 'read', 'account_linking', 'referral',
-                         'messaging_handovers', 'standby']
+                         'app_roles', 'standby']
 
     # these are set by decorators or the 'set_webhook_handler' method
     _webhook_handlers = {}
@@ -384,8 +384,8 @@ class Page(object):
                 self._call_handler('account_linking', account_linking, event)
             elif event.is_referral:
                 self._call_handler('referral', referral, event)
-            elif event.is_messaging_handovers:
-                self._call_handler('messaging_handovers', messaging_handovers, event)
+            elif event.app_roles:
+                self._call_handler('app_roles', app_roles, event)
             # elif event.is_standby:
             #     self._call_handler('standby', standby, event)
             else:
@@ -652,8 +652,8 @@ class Page(object):
     def after_send(self, func):
         self._after_send = func
 
-    def handle_massaging_handovers(self, func):
-        self._webhook_handlers['massaging_handovers'] = func
+    def handle_app_roles(self, func):
+        self._webhook_handlers['app_roles'] = func
 
     # def standby(self, func):
     #     self._handovers = func
